@@ -71,7 +71,10 @@ def _build_prompt(items: list, feedback: list, servings: int) -> str:
         "feasible을 false로, note에 그 이유를 적을 것."
     )
     lines.append(
-        "- steps는 \"1. ...\\n2. ...\" 형태의 번호 매겨진 여러 줄 문자열로 작성할 것 (배열 아님)."
+        "- steps는 배열이 아니라 하나의 문자열이며, 각 조리 단계를 \"1. \", \"2. \" 처럼 번호로 시작하고 "
+        "단계와 단계 사이는 반드시 줄바꿈 문자(\\n)로 구분할 것. "
+        "예: \"1. 양파를 썬다.\\n2. 팬에 볶는다.\\n3. 간을 한다.\" "
+        "(한 줄에 여러 단계를 이어 붙이지 말 것)."
     )
     lines.append("- 반드시 지정된 JSON 스키마 형식으로만 응답할 것.")
     return "\n".join(lines)
