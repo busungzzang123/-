@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>냉장고털기</title>
+<style>
+:root{
+  --bg:#f7f7f8; --surface:#fff;
+  --ink:#171719; --ink-body:rgba(46,47,51,.88); --ink-sub:rgba(55,56,60,.61); --ink-off:rgba(55,56,60,.28);
+  --brand:#0066ff; --brand-strong:#005eeb; --brand-bg:#eaf2fe;
+  --ok:#00bf40; --err:#ff4242; --warn:#ff9200; --warn-ink:#b86900;
+  --line:rgba(112,115,124,.22); --line-soft:rgba(112,115,124,.08);
+  --hairline:inset 0 0 0 1px rgba(112,115,124,.22);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg)}
+body{
+  font-family:"Pretendard JP","Pretendard",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  -webkit-font-smoothing:antialiased;
+  color:var(--ink-body);
+}
+[hidden]{display:none!important}
+input,textarea,button{font-family:inherit}
+button{cursor:pointer}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.header{background:var(--surface);box-shadow:0 1px 0 0 var(--line-soft);position:sticky;top:0;z-index:20}
+.header-inner{max-width:1060px;margin:0 auto;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{display:flex;align-items:baseline;gap:10px;min-width:0}
+.brand-name{font-size:20px;font-weight:600;letter-spacing:-0.02em;color:var(--ink);white-space:nowrap}
+.brand-tagline{font-size:13px;color:var(--ink-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill{flex:0 0 auto;font-size:12px;color:var(--ink-sub);background:var(--line-soft);padding:6px 10px;border-radius:1000px;white-space:nowrap}
+
+main{max-width:1060px;margin:0 auto;padding:32px 20px 48px;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;align-items:start}
+.right-col{display:flex;flex-direction:column;gap:20px}
+
+.card{background:var(--surface);border-radius:16px;box-shadow:var(--hairline);padding:24px}
+.card-title-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:16px}
+.card-title{font-size:17px;font-weight:600;color:var(--ink);margin:0}
+.card-sub{font-size:13px;color:var(--ink-sub);margin:0 0 16px}
+
+.add-row{display:grid;grid-template-columns:1fr 110px auto;gap:8px;margin-bottom:16px}
+.input{height:44px;padding:0 14px;border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.03);font-size:15px;color:var(--ink);outline:none}
+.input:focus{border-color:var(--brand)}
+.input::placeholder{color:var(--ink-off)}
+
+.btn{height:44px;padding:0 18px;border:0;border-radius:12px;background:var(--brand);color:#fff;font-size:15px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .12s cubic-bezier(.25,.1,.25,1)}
+.btn:hover:not(:disabled){background:var(--brand-strong)}
+.btn:disabled{background:rgba(55,56,60,.16);cursor:not-allowed}
+
+.btn-2{height:40px;padding:0 16px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink-body);font-size:14px;font-weight:600;white-space:nowrap}
+.btn-2:hover:not(:disabled){background:rgba(0,0,0,.05)}
+.btn-2:disabled{opacity:.5;cursor:not-allowed}
+
+.btn-text{border:0;background:none;padding:6px 8px;font-size:13px;color:var(--ink-off);border-radius:8px;transition:color .12s cubic-bezier(.25,.1,.25,1)}
+.btn-text:hover{color:var(--err);background:rgba(0,0,0,.05)}
+
+.error-text{margin:-8px 0 16px;font-size:13px;color:var(--err)}
+
+.empty-box{border:1px dashed var(--line);border-radius:12px;padding:36px 20px;text-align:center}
+.empty-title{font-size:15px;color:var(--ink-sub);margin:0 0 4px}
+.empty-sub{font-size:13px;color:var(--ink-off);margin:0}
+
+.status-text{font-size:13px;color:var(--ink-sub);padding:8px 0}
+.status-text.is-error{color:var(--err)}
+
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.row{display:flex;align-items:center;gap:16px;padding:12px 8px;margin:0 -8px;border-radius:8px;border-bottom:1px solid var(--line-soft);transition:background .12s}
+.row:last-child{border-bottom:0}
+.row:hover{background:rgba(112,115,124,.05)}
+.row .name{flex:1;min-width:0;font-size:15px;color:var(--ink-body);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .amount{flex:0 0 auto;min-width:56px;text-align:right;font-size:13px;color:var(--ink-sub);font-variant-numeric:tabular-nums}
+
+.undo{margin-top:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:#1b1c1e;color:#fff;border-radius:12px;padding:12px 14px;animation:fadeUp .2s cubic-bezier(.16,1,.3,1) both}
+.undo span{font-size:14px}
+.undo button{border:0;background:none;color:#3385ff;font-size:14px;font-weight:600;padding:4px 6px}
+
+.controls-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.stepper{display:flex;align-items:center;border:1px solid var(--line);border-radius:12px;overflow:hidden;height:44px}
+.stepper button{width:40px;height:100%;border:0;background:none;font-size:18px;color:var(--ink-sub)}
+.stepper button:hover:not(:disabled){background:rgba(0,0,0,.05)}
+.stepper button:disabled{color:var(--ink-off);cursor:not-allowed}
+.stepper span{min-width:44px;text-align:center;font-size:15px;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+.error-box{margin-top:16px;border-radius:12px;background:rgba(255,66,66,.06);padding:14px 16px}
+.error-box p{margin:0;font-size:15px;color:var(--err)}
+
+.skeleton-card{display:flex;flex-direction:column;gap:12px}
+.skeleton-bar{border-radius:6px;background:var(--line-soft)}
+.skeleton-title{height:22px;width:40%}
+.skeleton-line{height:14px;width:80%}
+.skeleton-line.short{width:65%}
+.skeleton-note{font-size:13px;color:var(--ink-sub);margin:4px 0 0}
+
+.result-card{animation:fadeUp .2s cubic-bezier(.16,1,.3,1) both}
+.result-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.recipe-name{font-size:24px;font-weight:600;letter-spacing:-0.02em;color:#000;margin:0}
+.badge{padding:3px 8px;border-radius:1000px;font-size:12px;font-weight:600;letter-spacing:.02em}
+.badge-ok{background:var(--brand-bg);color:var(--brand)}
+.badge-warn{background:rgba(255,146,0,.12);color:var(--warn-ink)}
+.servings-label{font-size:13px;color:var(--ink-sub);margin:0 0 16px}
+
+.note-box{border-radius:12px;padding:14px 16px;margin-bottom:20px}
+.note-box p{margin:0;font-size:15px;line-height:1.625;color:var(--ink-sub)}
+
+.steps-title{font-size:13px;font-weight:600;color:var(--ink-sub);margin:0 0 8px}
+.steps{margin:0 0 24px;white-space:pre-line;line-height:1.75;font-size:15px;color:var(--ink-body)}
+
+.feedback-section{border-top:1px solid var(--line-soft);padding-top:20px}
+.feedback-prompt{font-size:13px;color:var(--ink-sub);margin:0 0 10px}
+.rating-row{display:flex;gap:8px;margin-bottom:10px}
+.rating-btn{height:40px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--ink-sub);font-size:14px;font-weight:600;cursor:pointer}
+.rating-btn.selected-good{border-color:var(--brand);background:var(--brand-bg);color:var(--brand)}
+.rating-btn.selected-bad{border-color:var(--err);background:rgba(255,66,66,.06);color:var(--err)}
+.comment-row{display:flex;gap:8px}
+.comment-row .input{flex:1;height:40px;font-size:14px}
+.feedback-done{margin:0;font-size:15px;color:var(--ok)}
+.feedback-error{margin:8px 0 0;font-size:13px;color:var(--err)}
+
+.retry-btn{margin-left:8px;border:0;background:none;color:var(--brand);font-size:13px;font-weight:600;cursor:pointer;padding:0}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-name">냉장고털기</span>
+      <span class="brand-tagline">있는 재료로 오늘 뭐 해먹지</span>
+    </div>
+    <span class="pill">팀 공용 냉장고 · 모두가 같은 목록을 봅니다</span>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <div class="card-title-row">
+      <h2 class="card-title">냉장고</h2>
+      <span class="card-sub" id="itemCountLabel" style="margin:0">0개 재료</span>
+    </div>
+
+    <div class="add-row">
+      <input id="nameInput" class="input" placeholder="재료 이름 (예: 양파)">
+      <input id="amountInput" class="input" placeholder="양 (1개)">
+      <button id="addBtn" class="btn" disabled>담기</button>
+    </div>
+
+    <p id="addError" class="error-text" hidden></p>
+
+    <p id="fridgeStatus" class="status-text" hidden></p>
+
+    <div id="emptyState" class="empty-box" hidden>
+      <p class="empty-title">냉장고가 비어있어요</p>
+      <p class="empty-sub">재료를 담으면 레시피를 추천해드릴게요</p>
+    </div>
+
+    <ul id="itemList" class="list" hidden></ul>
+
+    <p id="listError" class="error-text" style="margin-top:16px" hidden></p>
+
+    <div id="undoBar" class="undo" hidden>
+      <span id="undoText"></span>
+      <button id="undoBtn">되돌리기</button>
+    </div>
+  </section>
+
+  <section class="right-col">
+    <div class="card">
+      <h2 class="card-title" style="margin:0 0 4px">레시피 추천</h2>
+      <p class="card-sub">냉장고에 있는 재료 전부와 최근 후기 3개를 반영합니다</p>
+      <div class="controls-row">
+        <label class="card-sub" style="margin:0" for="minusBtn">인분</label>
+        <div class="stepper">
+          <button id="minusBtn" aria-label="인분 줄이기">−</button>
+          <span id="servingsValue">3</span>
+          <button id="plusBtn" aria-label="인분 늘리기">+</button>
+        </div>
+        <button id="recommendBtn" class="btn" style="flex:1;min-width:160px">레시피 추천받기</button>
+      </div>
+
+      <div id="apiErrorBox" class="error-box" hidden>
+        <p id="apiErrorText"></p>
+      </div>
+    </div>
+
+    <div id="loadingCard" class="card skeleton-card" hidden>
+      <div class="skeleton-bar skeleton-title"></div>
+      <div class="skeleton-bar skeleton-line"></div>
+      <div class="skeleton-bar skeleton-line short"></div>
+      <p class="skeleton-note">AI가 레시피를 고르는 중… 최대 30초까지 걸릴 수 있어요</p>
+    </div>
+
+    <article id="resultCard" class="card result-card" hidden>
+      <div class="result-head">
+        <h3 id="recipeName" class="recipe-name"></h3>
+        <span id="badge" class="badge"></span>
+      </div>
+      <p id="servingsLabel" class="servings-label"></p>
+
+      <div id="noteBox" class="note-box">
+        <p id="noteText"></p>
+      </div>
+
+      <h4 class="steps-title">조리 순서</h4>
+      <p id="stepsText" class="steps"></p>
+
+      <div class="feedback-section">
+        <div id="feedbackForm">
+          <p class="feedback-prompt">해먹어 보셨나요? 후기는 다음 추천에 반영됩니다</p>
+          <div class="rating-row">
+            <button id="goodBtn" class="rating-btn">좋았음</button>
+            <button id="badBtn" class="rating-btn">별로였음</button>
+          </div>
+          <div class="comment-row">
+            <input id="commentInput" class="input" placeholder="코멘트 (선택)">
+            <button id="submitFeedbackBtn" class="btn-2" disabled>후기 남기기</button>
+          </div>
+          <p id="feedbackError" class="feedback-error" hidden></p>
+        </div>
+        <p id="feedbackDoneText" class="feedback-done" hidden>후기를 남겼습니다</p>
+      </div>
+    </article>
+  </section>
+</main>
+
+<script>
+// TODO: 배포 전 Railway에 배포된 실제 백엔드 URL로 변경할 것
+const BACKEND_URL = "http://localhost:8000";
+
+const nameInput = document.getElementById('nameInput');
+const amountInput = document.getElementById('amountInput');
+const addBtn = document.getElementById('addBtn');
+const addError = document.getElementById('addError');
+const itemCountLabel = document.getElementById('itemCountLabel');
+const fridgeStatusEl = document.getElementById('fridgeStatus');
+const emptyState = document.getElementById('emptyState');
+const itemListEl = document.getElementById('itemList');
+const listError = document.getElementById('listError');
+const undoBar = document.getElementById('undoBar');
+const undoText = document.getElementById('undoText');
+const undoBtn = document.getElementById('undoBtn');
+
+const minusBtn = document.getElementById('minusBtn');
+const plusBtn = document.getElementById('plusBtn');
+const servingsValueEl = document.getElementById('servingsValue');
+const recommendBtn = document.getElementById('recommendBtn');
+const apiErrorBox = document.getElementById('apiErrorBox');
+const apiErrorText = document.getElementById('apiErrorText');
+const loadingCard = document.getElementById('loadingCard');
+const resultCard = document.getElementById('resultCard');
+const recipeNameEl = document.getElementById('recipeName');
+const badgeEl = document.getElementById('badge');
+const servingsLabelEl = document.getElementById('servingsLabel');
+const noteBox = document.getElementById('noteBox');
+const noteText = document.getElementById('noteText');
+const stepsText = document.getElementById('stepsText');
+const feedbackForm = document.getElementById('feedbackForm');
+const goodBtn = document.getElementById('goodBtn');
+const badBtn = document.getElementById('badBtn');
+const commentInput = document.getElementById('commentInput');
+const submitFeedbackBtn = document.getElementById('submitFeedbackBtn');
+const feedbackError = document.getElementById('feedbackError');
+const feedbackDoneText = document.getElementById('feedbackDoneText');
+
+const state = {
+  items: [],
+  fridgeStatus: 'loading', // 'loading' | 'loaded' | 'error'
+  undo: null,
+  servings: 3,
+  isRecommending: false,
+  result: null,
+  rating: '',
+};
+
+function networkOrMessage(err) {
+  return err instanceof TypeError ? '서버에 연결할 수 없어요' : err.message;
+}
+
+async function apiFetch(path, options) {
+  const res = await fetch(BACKEND_URL + path, options);
+  let data = null;
+  try { data = await res.json(); } catch (e) { /* body 없음 */ }
+  if (!res.ok) {
+    const detail = data && data.detail;
+    const message = typeof detail === 'string' ? detail : '요청 형식이 올바르지 않습니다';
+    throw new Error(message);
+  }
+  return data;
+}
+
+// ---------- 냉장고 목록 ----------
+
+function renderList() {
+  itemCountLabel.textContent = state.items.length + '개 재료';
+
+  fridgeStatusEl.hidden = true;
+  fridgeStatusEl.classList.remove('is-error');
+  emptyState.hidden = true;
+  itemListEl.hidden = true;
+
+  if (state.fridgeStatus === 'loading') {
+    fridgeStatusEl.textContent = '불러오는 중…';
+    fridgeStatusEl.hidden = false;
+    return;
+  }
+  if (state.fridgeStatus === 'error') {
+    fridgeStatusEl.innerHTML = '';
+    fridgeStatusEl.classList.add('is-error');
+    fridgeStatusEl.appendChild(document.createTextNode(state.fridgeError || '서버에 연결할 수 없어요'));
+    const retry = document.createElement('button');
+    retry.className = 'retry-btn';
+    retry.textContent = '다시 시도';
+    retry.onclick = loadItems;
+    fridgeStatusEl.appendChild(retry);
+    fridgeStatusEl.hidden = false;
+    return;
+  }
+
+  if (state.items.length === 0) {
+    emptyState.hidden = false;
+    return;
+  }
+
+  itemListEl.innerHTML = '';
+  state.items.forEach((item) => {
+    const li = document.createElement('li');
+    li.className = 'row';
+
+    const name = document.createElement('span');
+    name.className = 'name';
+    name.textContent = item.name;
+
+    const amount = document.createElement('span');
+    amount.className = 'amount';
+    amount.textContent = item.amount;
+
+    const del = document.createElement('button');
+    del.className = 'btn-text';
+    del.textContent = '삭제';
+    del.setAttribute('aria-label', '삭제');
+    del.onclick = () => deleteItem(item.id);
+
+    li.appendChild(name);
+    li.appendChild(amount);
+    li.appendChild(del);
+    itemListEl.appendChild(li);
+  });
+  itemListEl.hidden = false;
+}
+
+function renderUndo() {
+  if (state.undo) {
+    undoText.textContent = "'" + state.undo.item.name + "'을(를) 뺐습니다";
+    undoBar.hidden = false;
+  } else {
+    undoBar.hidden = true;
+  }
+}
+
+async function loadItems() {
+  state.fridgeStatus = 'loading';
+  renderList();
+  try {
+    const data = await apiFetch('/api/fridge/items');
+    state.items = data;
+    state.fridgeStatus = 'loaded';
+  } catch (err) {
+    state.fridgeStatus = 'error';
+    state.fridgeError = networkOrMessage(err);
+  }
+  renderList();
+}
+
+function showAddError(message) {
+  addError.textContent = message;
+  addError.hidden = false;
+}
+function clearAddError() {
+  addError.hidden = true;
+}
+function showListError(message) {
+  listError.textContent = message;
+  listError.hidden = false;
+}
+function clearListError() {
+  listError.hidden = true;
+}
+
+function updateAddButtonState() {
+  const bothEmpty = !nameInput.value.trim() && !amountInput.value.trim();
+  addBtn.disabled = bothEmpty;
+}
+
+let isAdding = false;
+async function addItem() {
+  if (isAdding) return;
+  const name = nameInput.value.trim();
+  const amount = amountInput.value.trim();
+  if (!name || !amount) {
+    showAddError('재료 이름과 양을 모두 입력해주세요');
+    return;
+  }
+  clearAddError();
+  isAdding = true;
+  try {
+    const item = await apiFetch('/api/fridge/items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, amount }),
+    });
+    state.items.push(item);
+    state.undo = null;
+    nameInput.value = '';
+    amountInput.value = '';
+    renderList();
+    renderUndo();
+    updateAddButtonState();
+  } catch (err) {
+    showAddError(networkOrMessage(err));
+  } finally {
+    isAdding = false;
+  }
+}
+
+async function deleteItem(id) {
+  const index = state.items.findIndex((it) => it.id === id);
+  if (index === -1) return;
+  const item = state.items[index];
+  state.items.splice(index, 1);
+  renderList();
+  clearListError();
+  try {
+    await apiFetch('/api/fridge/items/' + id, { method: 'DELETE' });
+    state.undo = { item, index };
+    renderUndo();
+  } catch (err) {
+    state.items.splice(index, 0, item);
+    renderList();
+    showListError(networkOrMessage(err));
+  }
+}
+
+async function undoDelete() {
+  if (!state.undo) return;
+  const { item, index } = state.undo;
+  try {
+    const newItem = await apiFetch('/api/fridge/items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: item.name, amount: item.amount }),
+    });
+    state.items.splice(index, 0, newItem);
+    state.undo = null;
+    renderList();
+    renderUndo();
+  } catch (err) {
+    showListError(networkOrMessage(err));
+  }
+}
+
+nameInput.addEventListener('input', updateAddButtonState);
+amountInput.addEventListener('input', updateAddButtonState);
+nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addItem(); });
+amountInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addItem(); });
+addBtn.addEventListener('click', addItem);
+undoBtn.addEventListener('click', undoDelete);
+
+// ---------- 레시피 추천 ----------
+
+function updateServingsUI() {
+  servingsValueEl.textContent = state.servings;
+  minusBtn.disabled = state.servings <= 1;
+}
+minusBtn.addEventListener('click', () => {
+  state.servings = Math.max(1, state.servings - 1);
+  updateServingsUI();
+});
+plusBtn.addEventListener('click', () => {
+  state.servings = Math.min(12, state.servings + 1);
+  updateServingsUI();
+});
+
+function showApiError(message) {
+  apiErrorText.textContent = message;
+  apiErrorBox.hidden = false;
+}
+function hideApiError() {
+  apiErrorBox.hidden = true;
+}
+function hideResult() {
+  resultCard.hidden = true;
+}
+function setRecommendLoading(loading) {
+  recommendBtn.disabled = loading;
+  recommendBtn.textContent = loading ? '추천 중…' : '레시피 추천받기';
+  loadingCard.hidden = !loading;
+}
+
+async function recommend() {
+  if (state.isRecommending) return;
+  if (state.items.length === 0) {
+    hideResult();
+    showApiError('냉장고에 재료가 없습니다');
+    return;
+  }
+  state.isRecommending = true;
+  hideApiError();
+  hideResult();
+  setRecommendLoading(true);
+  try {
+    const data = await apiFetch('/api/recommend', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ servings: state.servings }),
+    });
+    state.result = data;
+    state.rating = '';
+    commentInput.value = '';
+    renderResult();
+  } catch (err) {
+    showApiError(networkOrMessage(err));
+  } finally {
+    state.isRecommending = false;
+    setRecommendLoading(false);
+  }
+}
+recommendBtn.addEventListener('click', recommend);
+
+function renderResult() {
+  const r = state.result;
+  if (!r) { resultCard.hidden = true; return; }
+
+  recipeNameEl.textContent = r.recipe_name;
+  servingsLabelEl.textContent = r.servings + '인분 기준';
+
+  badgeEl.textContent = r.feasible ? '재료 충분' : '재료 일부 부족';
+  badgeEl.className = 'badge ' + (r.feasible ? 'badge-ok' : 'badge-warn');
+  noteBox.style.background = r.feasible ? 'var(--brand-bg)' : 'rgba(255,146,0,.08)';
+  noteText.textContent = r.note;
+
+  stepsText.textContent = r.steps;
+
+  renderFeedback();
+
+  resultCard.hidden = false;
+}
+
+function renderFeedback() {
+  const done = !!(state.result && state.result._feedbackDone);
+  feedbackForm.hidden = done;
+  feedbackDoneText.hidden = !done;
+  feedbackError.hidden = true;
+
+  goodBtn.className = 'rating-btn' + (state.rating === '좋았음' ? ' selected-good' : '');
+  badBtn.className = 'rating-btn' + (state.rating === '별로였음' ? ' selected-bad' : '');
+  submitFeedbackBtn.disabled = !state.rating;
+}
+
+goodBtn.addEventListener('click', () => { state.rating = '좋았음'; renderFeedback(); });
+badBtn.addEventListener('click', () => { state.rating = '별로였음'; renderFeedback(); });
+
+async function submitFeedback() {
+  if (!state.rating || !state.result) return;
+  const body = { rating: state.rating };
+  const comment = commentInput.value.trim();
+  if (comment) body.comment = comment;
+
+  submitFeedbackBtn.disabled = true;
+  try {
+    await apiFetch('/api/recipes/' + state.result.recipe_id + '/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    state.result._feedbackDone = true;
+    renderFeedback();
+  } catch (err) {
+    feedbackError.textContent = networkOrMessage(err);
+    feedbackError.hidden = false;
+    submitFeedbackBtn.disabled = !state.rating;
+  }
+}
+submitFeedbackBtn.addEventListener('click', submitFeedback);
+
+// ---------- 초기화 ----------
+updateServingsUI();
+updateAddButtonState();
+loadItems();
+</script>
+
+</body>
+</html>
