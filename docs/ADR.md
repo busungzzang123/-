@@ -28,4 +28,14 @@ MVP 속도 최우선. 프론트/백엔드 담당자가 서로 다른 파일만 �
 ### ADR-005: 에러 응답 형식 이원화 (HTTPException vs FastAPI 자동 422)
 **결정**: 백엔드가 직접 던지는 에러는 `{"detail": "문자열"}`, FastAPI가 자동으로 만드는 검증 에러(422)는 `{"detail": [{"loc":...,"msg":...,"type":...}]}` 배열 그대로 둔다. FastAPI 기본 동작을 억지로 통일시키지 않는다.
 **이유**: FastAPI의 기본 422 처리 방식을 오버라이드하는 비용보다, 프론트에서 `detail`의 타입을 분기 처리하는 편이 백엔드 구현이 단순하고 실수가 적다.
-**트레이드오프**: 프론트엔드가 항상 `typeof detail === "string"` 체크를 해야 하며, 빼먹으면 `[object Object]`가 화면에 노출되는 버그가 생긴다.
+**트레이드오프**: 프론트엔드가 항상 `typeof detail === "string"` 체크를 해야 하며, 빼먹으면 `[object Object]`가 화면에 노출되는 버그가 생긴다. `rating` 검증처럼 "값은 틀렸지만 상태 코드는 422, detail은 문자열"인 예외 케이스가 있어 상태 코드가 아니라 `detail`의 타입으로만 분기해야 한다 (SPEC.md 5-5 참고).
+
+### ADR-006: Gemini 구조화 출력(responseSchema) 강제
+**결정**: Gemini 호출 시 `generationConfig.responseMimeType: "application/json"`과 `responseSchema`를 지정해 `recipe_name`/`servings`/`feasible`/`note`/`steps` 필드를 갖는 JSON만 반환하도록 강제한다.
+**이유**: 자유 형식 프롬프트만으로는 모델이 마크다운·설명 문장을 섞어 응답할 수 있어, 코딩 지식 없는 개발자가 만든 파싱 코드가 쉽게 깨진다. 스키마를 강제하면 파싱 실패(502)를 구조적으로 줄일 수 있다.
+**트레이드오프**: Gemini 응답이 스키마를 완전히 못 지키는 극단적 케이스(모델 오류 등)는 여전히 남아있어 502 처리 로직은 그대로 유지해야 한다.
+
+### ADR-007: SQLite 단일 워커 운영
+**결정**: 프로덕션 uvicorn을 `--workers` 옵션 없이 단일 워커로만 실행한다.
+**이유**: SQLite는 다중 프로세스 동시 쓰기에 취약해 워커를 늘리면 "database is locked" 에러가 발생할 수 있다. MVP 트래픽 규모에서는 단일 워커로 충분하다.
+**트레이드오프**: 요청이 몰리면 처리량이 제한된다. 트래픽이 늘면 SQLite→다른 DB 전환 또는 워커별 DB 접근 방식 재검토가 필요하다.

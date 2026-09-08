@@ -31,6 +31,8 @@ project-root/
       → backend/db.py   : SQLite CRUD (fridge_items / recipes / recipe_feedback)
       → backend/llm.py  : Gemini API 호출 (레시피 추천 요청에서만 실행)
                            냉장고 재료 전체 + 최근 피드백 3개(SQL로 조회)를 프롬프트에 포함
+                           responseMimeType/responseSchema로 구조화된 JSON 응답 강제
+                           (recipe_name/servings/feasible/note/steps) — 파싱 성공 후에만 recipes에 INSERT
   → JSON 응답 (200 고정, snake_case)
   → 프론트 DOM 업데이트 (로딩 중 / 빈 목록 / 에러 각각 다른 문구)
 ```

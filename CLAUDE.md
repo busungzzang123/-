@@ -14,6 +14,10 @@
 - 레포 폴더 구조는 고정이다 (`backend/{app.py,db.py,llm.py,requirements.txt}`, `frontend/index.html`, 루트 `index.html`, `README.md`). 임의로 바꾸지 않는다.
 - `backend/app.py`는 라우트 핸들러만 두고, SQLite 접근은 `backend/db.py`, Gemini 호출은 `backend/llm.py`에 분리한다.
 - Gemini 호출에는 반드시 `timeout=30`을 지정하고 `try/except`로 감싸 원본 예외(및 API 키·요청 URL)가 클라이언트에 노출되지 않게 한다.
+- CRITICAL: Gemini 호출 시 `generationConfig.responseMimeType: "application/json"`과 `responseSchema`를 반드시 지정해 구조화된 JSON 출력을 강제한다. 이걸 빼면 자유 형식 텍스트가 섞여 502(AI 응답 파싱 실패)가 빈번해진다. 정확한 요청/응답 형식은 `/SPEC.md` 5-4-1 참고.
+- CRITICAL: `recipe_feedback.rating` 검증은 Pydantic `Literal` 타입이 아니라 `str` + 수동 if문 + `HTTPException(422, "문자열")`로 구현한다. `Literal`을 쓰면 FastAPI가 자동으로 배열 형태 422를 내려보내 SPEC의 문자열 detail 요구사항과 어긋난다.
+- CRITICAL: `added_at`/`created_at`은 SQLite `datetime('now')` 기본값을 그대로 응답에 내리지 않는다. Python에서 `datetime.utcnow().isoformat()`으로 만든 `T` 구분자 ISO 8601 문자열을 INSERT 시 직접 넣는다 (공백 구분자는 브라우저 `new Date()` 파싱이 불안정함).
+- 프로덕션 uvicorn은 워커 1개로만 실행한다 (`--workers` 금지). SQLite 동시 쓰기 이슈로 "database is locked"가 날 수 있다.
 - 상세 API 명세·데이터 모델·엣지케이스는 `/SPEC.md`, 아키텍처 배경은 `docs/ARCHITECTURE.md`·`docs/ADR.md` 참고.
 
 ## 개발 프로세스
