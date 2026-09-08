@@ -4,6 +4,11 @@ out/
 next-env.d.ts
 tsconfig.tsbuildinfo
 
+# backend
+.env
+*.db
+__pycache__/
+
 # phase execution outputs
 phases/**/phase*-output.json
 phases/**/step*-output.json
