@@ -9,6 +9,7 @@ SPEC.md 5-4-1(Gemini 호출 방법), 6번(최근 피드백 반영 / 프롬프트
 
 import json
 import os
+import re
 
 import requests
 
@@ -40,6 +41,18 @@ class AIRequestError(Exception):
 
 class AIResponseFormatError(Exception):
     """AI 응답을 예상 스키마의 dict 로 파싱하지 못함."""
+
+
+def _clean_str(value) -> str:
+    # 스키마에 required로 지정해도 Gemini가 가끔 null을 내려보낸다.
+    # str(None) == "None" 이 그대로 화면에 노출되는 걸 막는다.
+    return "" if value is None else str(value)
+
+
+def _ensure_step_newlines(steps: str) -> str:
+    # 프롬프트에서 "\n으로 구분할 것"을 지시해도 가끔 한 줄로 이어붙여 보낸다.
+    # "1. ", "2. " 같은 번호 패턴 앞에 강제로 개행을 넣어 방어한다.
+    return re.sub(r"(?<!\A)(?<!\n)(\d+\.\s)", r"\n\1", steps)
 
 
 def _build_prompt(items: list, feedback: list, servings: int, focus_ingredient: str = None) -> str:
@@ -142,11 +155,11 @@ def recommend_recipe(items: list, feedback: list, servings: int, focus_ingredien
 
     try:
         return {
-            "recipe_name": str(data["recipe_name"]),
+            "recipe_name": _clean_str(data["recipe_name"]),
             "servings": int(data["servings"]),
             "feasible": bool(data["feasible"]),
-            "note": str(data["note"]),
-            "steps": str(data["steps"]),
+            "note": _clean_str(data["note"]),
+            "steps": _ensure_step_newlines(_clean_str(data["steps"])),
         }
     except (TypeError, ValueError):
         raise AIResponseFormatError()

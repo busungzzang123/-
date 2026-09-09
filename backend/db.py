@@ -57,12 +57,20 @@ def init_db():
         )
         conn.commit()
 
-        # 기존 fridge.db 에는 is_main 컬럼이 없을 수 있으므로 마이그레이션.
+        # 기존 fridge.db 에는 아래 컬럼들이 없을 수 있으므로 마이그레이션.
         existing_cols = {row["name"] for row in conn.execute("PRAGMA table_info(fridge_items)")}
         if "is_main" not in existing_cols:
             conn.execute(
                 "ALTER TABLE fridge_items ADD COLUMN is_main INTEGER NOT NULL DEFAULT 0"
             )
+            conn.commit()
+        if "category" not in existing_cols:
+            conn.execute(
+                "ALTER TABLE fridge_items ADD COLUMN category TEXT NOT NULL DEFAULT '기타'"
+            )
+            conn.commit()
+        if "expiry_date" not in existing_cols:
+            conn.execute("ALTER TABLE fridge_items ADD COLUMN expiry_date TEXT")
             conn.commit()
     finally:
         conn.close()
@@ -72,13 +80,23 @@ def init_db():
 # fridge_items
 # ---------------------------------------------------------------------------
 
-def add_item(name: str, amount: str) -> dict:
+_ITEM_COLUMNS = "id, name, amount, added_at, is_main, category, expiry_date"
+
+
+def _row_to_item(row) -> dict:
+    item = dict(row)
+    item["is_main"] = bool(item["is_main"])
+    return item
+
+
+def add_item(name: str, amount: str, category: str = "기타", expiry_date: str = None) -> dict:
     added_at = _now_iso()
     conn = _connect()
     try:
         cur = conn.execute(
-            "INSERT INTO fridge_items (name, amount, added_at) VALUES (?, ?, ?)",
-            (name, amount, added_at),
+            "INSERT INTO fridge_items (name, amount, added_at, category, expiry_date) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (name, amount, added_at, category, expiry_date),
         )
         conn.commit()
         return {
@@ -87,6 +105,8 @@ def add_item(name: str, amount: str) -> dict:
             "amount": amount,
             "added_at": added_at,
             "is_main": False,
+            "category": category,
+            "expiry_date": expiry_date,
         }
     finally:
         conn.close()
@@ -96,12 +116,9 @@ def list_items() -> list:
     conn = _connect()
     try:
         rows = conn.execute(
-            "SELECT id, name, amount, added_at, is_main FROM fridge_items ORDER BY added_at ASC"
+            f"SELECT {_ITEM_COLUMNS} FROM fridge_items ORDER BY added_at ASC"
         ).fetchall()
-        items = [dict(r) for r in rows]
-        for item in items:
-            item["is_main"] = bool(item["is_main"])
-        return items
+        return [_row_to_item(r) for r in rows]
     finally:
         conn.close()
 
@@ -110,14 +127,10 @@ def get_item(item_id: int):
     conn = _connect()
     try:
         row = conn.execute(
-            "SELECT id, name, amount, added_at, is_main FROM fridge_items WHERE id = ?",
+            f"SELECT {_ITEM_COLUMNS} FROM fridge_items WHERE id = ?",
             (item_id,),
         ).fetchone()
-        if row is None:
-            return None
-        item = dict(row)
-        item["is_main"] = bool(item["is_main"])
-        return item
+        return _row_to_item(row) if row else None
     finally:
         conn.close()
 
@@ -154,12 +167,10 @@ def set_item_main(item_id: int, is_main: bool):
         if cur.rowcount == 0:
             return None
         row = conn.execute(
-            "SELECT id, name, amount, added_at, is_main FROM fridge_items WHERE id = ?",
+            f"SELECT {_ITEM_COLUMNS} FROM fridge_items WHERE id = ?",
             (item_id,),
         ).fetchone()
-        item = dict(row)
-        item["is_main"] = bool(item["is_main"])
-        return item
+        return _row_to_item(row)
     finally:
         conn.close()
 

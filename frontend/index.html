@@ -4,18 +4,31 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>냉장고털기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0a0a;
-    --card: #141414;
-    --border: #262626;
-    --text: #ffffff;
-    --text-body: #d4d4d4;
-    --text-muted: #a3a3a3;
-    --text-disabled: #525252;
-    --positive: #22c55e;
-    --negative: #ef4444;
-    --neutral: #525252;
+    --bg: oklch(0.975 0.008 70);
+    --card: #ffffff;
+    --border: oklch(0.92 0.01 60);
+    --input-border: oklch(0.9 0.01 60);
+    --input-bg: oklch(0.98 0.005 60);
+    --text: oklch(0.2 0.01 60);
+    --text-body: oklch(0.35 0.01 60);
+    --text-muted: oklch(0.5 0.01 60);
+    --text-disabled: oklch(0.68 0.01 60);
+    --accent: oklch(0.68 0.16 42);
+    --accent-hover: oklch(0.62 0.17 42);
+    --accent-soft-bg: oklch(0.95 0.05 42);
+    --accent-soft-fg: oklch(0.45 0.14 42);
+    --negative: oklch(0.45 0.16 25);
+    --negative-bg: oklch(0.95 0.04 25);
+    --positive-bg: oklch(0.95 0.04 158);
+    --positive-fg: oklch(0.4 0.12 158);
+    --chip-bg: oklch(0.96 0.005 60);
+    --chip-fg: oklch(0.4 0.01 60);
+    --row-bg: oklch(0.99 0.003 60);
+    --row-main-bg: oklch(0.97 0.03 42);
   }
 
   * { box-sizing: border-box; }
@@ -24,324 +37,440 @@
     margin: 0;
     background: var(--bg);
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: 'Noto Sans KR', sans-serif;
     line-height: 1.5;
   }
 
+  input::placeholder { color: var(--text-disabled); }
+  input, select, button { font-family: 'Noto Sans KR', sans-serif; }
+  select { -webkit-appearance: none; appearance: none; }
+
   .page {
-    max-width: 720px;
-    margin: 0 auto;
-    padding: 40px 20px 80px;
+    min-height: 100vh;
+    padding: 40px 20px 120px;
   }
 
-  h1 {
-    font-size: 28px;
+  .wrap {
+    max-width: 880px;
+    margin: 0 auto;
+  }
+
+  .team-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .team-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+  }
+
+  .team-icon span {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    background: white;
+    opacity: 0.9;
+  }
+
+  .team-label {
+    font-size: 14px;
     font-weight: 600;
-    margin: 0 0 8px;
+    color: var(--text-muted);
+    background: var(--accent-soft-bg);
+    padding: 4px 12px;
+    border-radius: 100px;
+  }
+
+  h1.title {
+    font-family: 'Gowun Dodum', sans-serif;
+    font-size: 40px;
+    margin: 6px 0 8px;
+    color: var(--text);
   }
 
   .subtitle {
+    font-size: 15px;
+    line-height: 1.6;
     color: var(--text-muted);
-    font-size: 14px;
-    margin: 0 0 32px;
-  }
-
-  section {
-    margin-bottom: 32px;
+    margin: 0 0 28px;
   }
 
   .card {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 20px;
+    border-radius: 20px;
+    padding: 26px;
+    box-shadow: 0 1px 2px oklch(0.2 0.01 60 / 0.04);
+    margin-bottom: 20px;
   }
 
-  h2 {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
+  .card h2 {
+    font-size: 17px;
+    font-weight: 700;
     margin: 0 0 16px;
-  }
-
-  .row {
-    display: flex;
-    gap: 8px;
-  }
-
-  input[type="text"],
-  input[type="number"] {
-    flex: 1;
-    background: #0d0d0d;
-    border: 1px solid var(--border);
     color: var(--text);
-    border-radius: 8px;
-    padding: 10px 12px;
-    font-size: 14px;
-    min-width: 0;
   }
 
-  input::placeholder {
-    color: var(--text-disabled);
+  .card .hint-text {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-muted);
+    margin: -8px 0 18px;
   }
 
-  input:focus {
+  .form-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+
+  .form-row:last-of-type { margin-bottom: 0; align-items: center; }
+
+  input[type="text"], input[type="number"], select {
+    padding: 13px 15px;
+    border-radius: 14px;
+    border: 1.5px solid var(--input-border);
+    font-size: 14.5px;
     outline: none;
-    border-color: #525252;
+    background: var(--input-bg);
+    color: var(--text);
   }
+
+  input[type="text"]#item-name-input { flex: 2; min-width: 150px; }
+  input[type="text"]#item-amount-input { flex: 1; min-width: 110px; }
+  select#item-category-input { flex: 1; min-width: 120px; color: var(--text-body); }
+  input#item-expiry-input { flex: 1; min-width: 140px; }
 
   button {
-    background: #ffffff;
-    color: #000000;
+    background: var(--accent);
+    color: #ffffff;
     border: none;
-    border-radius: 8px;
-    padding: 10px 16px;
-    font-size: 14px;
-    font-weight: 500;
+    border-radius: 14px;
+    padding: 13px 24px;
+    font-size: 14.5px;
+    font-weight: 700;
     cursor: pointer;
     white-space: nowrap;
   }
 
-  button:hover:not(:disabled) {
-    background: #d4d4d4;
-  }
+  button:hover:not(:disabled) { background: var(--accent-hover); }
 
   button:disabled {
-    background: #262626;
+    background: var(--chip-bg);
     color: var(--text-disabled);
     cursor: not-allowed;
   }
 
-  button.secondary {
+  button.ghost {
     background: transparent;
     color: var(--text-muted);
-    border: 1px solid var(--border);
+    font-weight: 600;
+    padding: 0;
   }
 
-  button.secondary:hover:not(:disabled) {
-    color: var(--text);
-    border-color: #525252;
-  }
+  button.ghost:hover:not(:disabled) { background: transparent; color: var(--text); }
 
   .error-text {
     color: var(--negative);
+    background: var(--negative-bg);
+    border-radius: 12px;
+    padding: 10px 14px;
     font-size: 13px;
-    margin-top: 8px;
+    margin-top: 12px;
   }
 
   .item-list {
     list-style: none;
-    margin: 16px 0 0;
+    margin: 0;
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
   }
 
   .item-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #0d0d0d;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding: 16px 18px;
+    border-radius: 16px;
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 12px;
   }
 
-  .item-info {
-    font-size: 14px;
-  }
-
-  .item-name {
-    color: var(--text);
-  }
-
-  .item-amount {
-    color: var(--text-muted);
-    margin-left: 6px;
-  }
-
-  .item-actions {
+  .item-main-info {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 12px;
+    flex-wrap: wrap;
+    min-width: 0;
   }
 
-  .item-main-toggle {
-    background: transparent;
-    color: var(--text-muted);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 4px 10px;
+  .item-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex: none;
+  }
+
+  .item-name { font-size: 16px; font-weight: 700; color: var(--text); }
+  .item-amount { font-size: 15px; color: var(--text-muted); }
+
+  .pill {
     font-size: 12px;
-    font-weight: 500;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 100px;
+    background: var(--chip-bg);
+    color: var(--chip-fg);
   }
 
-  .item-main-toggle:hover:not(:disabled) {
-    color: var(--text);
-    border-color: #525252;
-  }
+  .pill.expiry-urgent { background: var(--negative-bg); color: var(--negative); font-weight: 700; }
+  .pill.expiry-soon { background: var(--accent-soft-bg); color: var(--accent-soft-fg); font-weight: 700; }
+  .pill.expiry-ok { background: var(--positive-bg); color: var(--positive-fg); font-weight: 700; }
 
-  .item-main-toggle.active {
-    background: #ffffff;
-    color: #000000;
-    border-color: #ffffff;
-  }
+  .item-actions { display: flex; align-items: center; gap: 8px; flex: none; }
 
-  .item-main-toggle.active:hover:not(:disabled) {
-    background: #d4d4d4;
-  }
-
-  .item-delete {
-    background: transparent;
-    color: var(--text-disabled);
-    border: none;
-    padding: 4px 8px;
-    font-size: 13px;
-  }
-
-  .item-delete:hover:not(:disabled) {
-    color: var(--negative);
-    background: transparent;
-  }
-
-  .hint-text {
+  .btn-main-toggle {
+    padding: 9px 16px;
+    border-radius: 100px;
+    border: 1.5px solid var(--input-border);
+    background: white;
     color: var(--text-muted);
     font-size: 13px;
-    margin: -8px 0 16px;
+    font-weight: 700;
   }
 
-  .empty-state,
-  .loading-state {
+  .btn-main-toggle:hover:not(:disabled) { background: white; color: var(--text); }
+
+  .btn-main-toggle.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  .btn-main-toggle.active:hover:not(:disabled) { background: var(--accent-hover); }
+
+  .btn-remove {
+    padding: 9px 14px;
+    border-radius: 100px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .btn-remove:hover:not(:disabled) { background: var(--negative-bg); color: var(--negative); }
+
+  .empty-state, .loading-state {
     color: var(--text-muted);
     font-size: 14px;
-    padding: 16px 0;
+    padding: 20px 0;
     text-align: center;
   }
 
+  .float-bar {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    display: flex;
+    justify-content: center;
+    padding: 18px 20px;
+    background: linear-gradient(to top, var(--bg) 60%, transparent);
+    pointer-events: none;
+  }
+
+  .float-bar-inner {
+    max-width: 880px;
+    width: 100%;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    pointer-events: auto;
+  }
+
+  .servings-stepper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    border: 1.5px solid var(--input-border);
+    border-radius: 16px;
+    padding: 10px 14px;
+    flex: none;
+  }
+
+  .servings-stepper span.label { font-size: 13px; color: var(--text-muted); font-weight: 600; }
+  .servings-stepper span.value { font-size: 15px; font-weight: 700; min-width: 20px; text-align: center; }
+
+  .servings-stepper button {
+    background: var(--chip-bg);
+    color: var(--text);
+    border-radius: 8px;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    font-size: 15px;
+    line-height: 1;
+    font-weight: 700;
+  }
+
+  .servings-stepper button:hover:not(:disabled) { background: oklch(0.92 0.01 60); }
+
+  .btn-recommend {
+    flex: 1;
+    padding: 18px;
+    border-radius: 16px;
+    font-size: 15.5px;
+    font-weight: 800;
+    box-shadow: 0 8px 24px oklch(0.6 0.15 42 / 0.35);
+  }
+
+  /* 레시피 화면 */
   .recipe-card {
-    margin-top: 16px;
-    border-top: 1px solid var(--border);
-    padding-top: 16px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 22px 24px;
+    box-shadow: 0 1px 2px oklch(0.2 0.01 60 / 0.04);
+    margin-bottom: 20px;
   }
 
-  .recipe-title {
-    font-size: 18px;
-    font-weight: 600;
-    margin: 0 0 4px;
-  }
-
-  .recipe-meta {
-    color: var(--text-muted);
-    font-size: 13px;
-    margin: 0 0 12px;
-  }
-
-  .badge {
+  .recipe-focus-badge {
     display: inline-block;
     font-size: 12px;
-    font-weight: 500;
-    border-radius: 6px;
-    padding: 2px 8px;
-    margin-left: 8px;
+    font-weight: 700;
+    color: var(--accent-soft-fg);
+    background: var(--accent-soft-bg);
+    padding: 4px 10px;
+    border-radius: 100px;
   }
 
-  .badge.feasible {
-    color: var(--positive);
-    background: rgba(34, 197, 94, 0.12);
-  }
+  .recipe-title { font-size: 21px; font-weight: 800; margin: 12px 0 8px; color: var(--text); }
+  .recipe-desc { font-size: 14.5px; line-height: 1.6; color: var(--text-muted); margin: 0 0 14px; }
 
-  .badge.not-feasible {
-    color: #f59e0b;
-    background: rgba(245, 158, 11, 0.12);
-  }
+  .recipe-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
 
-  .recipe-note {
-    color: var(--text-body);
-    font-size: 14px;
-    background: #0d0d0d;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 12px;
-    margin-bottom: 12px;
-  }
-
+  .recipe-steps-label { font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 0 0 8px; }
   .recipe-steps {
-    color: var(--text-body);
     font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-body);
     white-space: pre-line;
+    background: var(--input-bg);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
   }
 
   .feedback-row {
-    margin-top: 16px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
   }
 
-  .feedback-buttons {
-    display: flex;
-    gap: 8px;
+  .feedback-buttons { display: flex; gap: 8px; }
+  .feedback-buttons button { flex: 1; }
+  .feedback-buttons button.secondary {
+    background: white;
+    color: var(--text-muted);
+    border: 1.5px solid var(--input-border);
   }
-
-  .feedback-buttons button {
-    flex: 1;
-  }
-
-  .feedback-done {
-    color: var(--positive);
-    font-size: 13px;
-  }
+  .feedback-buttons button.secondary:hover:not(:disabled) { color: var(--text); }
+  .feedback-done { color: var(--positive-fg); font-size: 13px; font-weight: 600; }
 </style>
 </head>
 <body>
 <div class="page">
-  <h1>냉장고털기</h1>
-  <p class="subtitle">우리 팀 공용 냉장고 — 재료를 등록하고 레시피를 추천받으세요.</p>
+  <div class="wrap">
 
-  <!-- 재료 추가 -->
-  <section>
-    <div class="card">
-      <h2>재료 추가</h2>
-      <div class="row">
-        <input type="text" id="item-name-input" placeholder="재료 이름 (예: 양파)">
-        <input type="text" id="item-amount-input" placeholder="양 (예: 1개)">
-        <button id="item-add-btn">추가</button>
+    <!-- 냉장고 화면 -->
+    <div id="fridge-screen">
+      <div class="team-row">
+        <div class="team-icon"><span></span></div>
+        <span class="team-label">공유 냉장고</span>
       </div>
-      <div class="error-text" id="item-add-error" hidden></div>
-    </div>
-  </section>
+      <h1 class="title">냉장고털기</h1>
+      <p class="subtitle">우리 팀 공용 냉장고 — 재료를 등록하고 레시피를 추천받으세요.</p>
 
-  <!-- 냉장고 현황 -->
-  <section>
-    <div class="card">
-      <h2>냉장고 현황</h2>
-      <p class="hint-text">'메인재료'로 최대 2개까지 표시하면, 표시한 재료마다 레시피를 하나씩 추천해줘요.</p>
-      <div id="fridge-list-container">
-        <div class="loading-state">불러오는 중...</div>
+      <div class="card">
+        <h2>재료 추가</h2>
+        <div class="form-row">
+          <input type="text" id="item-name-input" placeholder="재료 이름 (예: 양파)">
+          <input type="text" id="item-amount-input" placeholder="양 (예: 1개)">
+        </div>
+        <div class="form-row">
+          <select id="item-category-input"></select>
+          <input type="number" id="item-expiry-input" placeholder="유통기한 (일, 선택)" min="0">
+          <button id="item-add-btn">추가</button>
+        </div>
+        <div class="error-text" id="item-add-error" hidden></div>
       </div>
-    </div>
-  </section>
 
-  <!-- 레시피 추천 -->
-  <section>
-    <div class="card">
-      <h2>레시피 추천</h2>
-      <div class="row">
-        <input type="number" id="servings-input" placeholder="인분 수" min="1" value="2">
-        <button id="recommend-btn">추천받기</button>
+      <div class="card">
+        <h2>냉장고 현황</h2>
+        <p class="hint-text">'메인재료'로 최대 2개까지 표시하면, 표시한 재료마다 레시피를 하나씩 추천해줘요.</p>
+        <div id="fridge-list-container">
+          <div class="loading-state">불러오는 중...</div>
+        </div>
       </div>
-      <div class="error-text" id="recommend-error" hidden></div>
-      <div id="recipe-result"></div>
     </div>
-  </section>
+
+    <!-- 레시피 화면 -->
+    <div id="recipes-screen" hidden>
+      <button class="ghost" id="back-btn" style="margin-bottom:18px; display:block;">← 냉장고로 돌아가기</button>
+      <h1 class="title" style="font-size:34px;">추천 레시피</h1>
+      <p class="subtitle" id="recipes-subtitle">선택한 메인재료마다 레시피를 하나씩 추천해드려요.</p>
+      <div id="recipes-container"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 냉장고 화면 하단 고정 추천 버튼 -->
+<div class="float-bar" id="float-bar" hidden>
+  <div class="float-bar-inner">
+    <div class="servings-stepper">
+      <span class="label">인분</span>
+      <button id="servings-minus" type="button">−</button>
+      <span class="value" id="servings-value">2</span>
+      <button id="servings-plus" type="button">+</button>
+    </div>
+    <button class="btn-recommend" id="recommend-btn"></button>
+  </div>
 </div>
 
 <script>
   // 배포 직전에 실제 Railway 백엔드 주소로 반드시 변경할 것
   const BACKEND_URL = "http://localhost:8000";
+
+  const CATEGORIES = ["채소", "육류", "수산", "유제품", "조미료", "가공식품", "기타"];
+  const CATEGORY_DOT = {
+    "채소": "oklch(0.62 0.15 150)",
+    "육류": "oklch(0.58 0.17 25)",
+    "수산": "oklch(0.58 0.12 225)",
+    "유제품": "oklch(0.62 0.1 255)",
+    "조미료": "oklch(0.52 0.13 300)",
+    "가공식품": "oklch(0.62 0.12 90)",
+    "기타": "oklch(0.55 0.01 60)",
+  };
+  const MAX_MAIN_ITEMS = 2;
+
+  let servings = 2;
+  let fridgeItems = [];
 
   // -------------------------------------------------------------------------
   // 공통 유틸
@@ -372,6 +501,78 @@
     return div.innerHTML;
   }
 
+  // 오늘 날짜 기준으로 "YYYY-MM-DD" 문자열까지 남은 일수 계산
+  function daysUntil(dateStr) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(dateStr + "T00:00:00");
+    return Math.round((target - today) / 86400000);
+  }
+
+  function expiryBadge(dateStr) {
+    if (!dateStr) return null;
+    const d = daysUntil(dateStr);
+    if (d <= 2) return { label: d <= 0 ? "유통기한 지남" : `D-${d}`, cls: "expiry-urgent" };
+    if (d <= 7) return { label: `D-${d}`, cls: "expiry-soon" };
+    return { label: `D-${d}`, cls: "expiry-ok" };
+  }
+
+  // -------------------------------------------------------------------------
+  // 화면 전환
+  // -------------------------------------------------------------------------
+
+  const fridgeScreen = document.getElementById("fridge-screen");
+  const recipesScreen = document.getElementById("recipes-screen");
+  const floatBar = document.getElementById("float-bar");
+
+  function showFridgeScreen() {
+    fridgeScreen.hidden = false;
+    recipesScreen.hidden = true;
+    floatBar.hidden = false;
+  }
+
+  function showRecipesScreen() {
+    fridgeScreen.hidden = true;
+    recipesScreen.hidden = false;
+    floatBar.hidden = true;
+  }
+
+  document.getElementById("back-btn").addEventListener("click", showFridgeScreen);
+
+  // -------------------------------------------------------------------------
+  // 카테고리 선택지 초기화
+  // -------------------------------------------------------------------------
+
+  const categorySelect = document.getElementById("item-category-input");
+  CATEGORIES.forEach((cat) => {
+    const opt = document.createElement("option");
+    opt.value = cat;
+    opt.textContent = cat;
+    categorySelect.appendChild(opt);
+  });
+
+  // -------------------------------------------------------------------------
+  // 인분 스테퍼
+  // -------------------------------------------------------------------------
+
+  const servingsValueEl = document.getElementById("servings-value");
+  const recommendBtn = document.getElementById("recommend-btn");
+
+  function renderServings() {
+    servingsValueEl.textContent = servings;
+  }
+
+  document.getElementById("servings-minus").addEventListener("click", () => {
+    if (servings > 1) {
+      servings -= 1;
+      renderServings();
+    }
+  });
+  document.getElementById("servings-plus").addEventListener("click", () => {
+    servings += 1;
+    renderServings();
+  });
+
   // -------------------------------------------------------------------------
   // 냉장고 목록
   // -------------------------------------------------------------------------
@@ -387,46 +588,57 @@
         fridgeListContainer.innerHTML = `<div class="error-text">${escapeHtml(message)}</div>`;
         return;
       }
-      const items = await res.json();
-      renderFridgeItems(items);
+      fridgeItems = await res.json();
+      renderFridgeItems();
     } catch (err) {
       fridgeListContainer.innerHTML =
         '<div class="error-text">서버에 연결할 수 없습니다. 네트워크 상태를 확인해주세요.</div>';
     }
   }
 
-  function renderFridgeItems(items) {
-    if (!items || items.length === 0) {
+  function renderFridgeItems() {
+    if (!fridgeItems || fridgeItems.length === 0) {
       fridgeListContainer.innerHTML = '<div class="empty-state">냉장고가 비어있어요</div>';
+      updateRecommendButton();
       return;
     }
 
     const list = document.createElement("ul");
     list.className = "item-list";
 
-    items.forEach((item) => {
+    fridgeItems.forEach((item) => {
       const li = document.createElement("li");
       li.className = "item-row";
+      li.style.background = item.is_main ? "var(--row-main-bg)" : "var(--row-bg)";
 
-      const info = document.createElement("span");
-      info.className = "item-info";
-      info.innerHTML = `<span class="item-name">${escapeHtml(item.name)}</span><span class="item-amount">${escapeHtml(item.amount)}</span>`;
+      const info = document.createElement("div");
+      info.className = "item-main-info";
 
-      const actions = document.createElement("span");
+      const badge = expiryBadge(item.expiry_date);
+
+      info.innerHTML = `
+        <span class="item-dot" style="background:${CATEGORY_DOT[item.category] || CATEGORY_DOT["기타"]}"></span>
+        <span class="item-name">${escapeHtml(item.name)}</span>
+        <span class="item-amount">${escapeHtml(item.amount)}</span>
+        <span class="pill">${escapeHtml(item.category)}</span>
+        ${badge ? `<span class="pill ${badge.cls}">${escapeHtml(badge.label)}</span>` : ""}
+      `;
+
+      const actions = document.createElement("div");
       actions.className = "item-actions";
 
-      const mainToggleBtn = document.createElement("button");
-      mainToggleBtn.className = "item-main-toggle" + (item.is_main ? " active" : "");
-      mainToggleBtn.textContent = item.is_main ? "메인재료 ✓" : "메인재료로 표시";
-      mainToggleBtn.addEventListener("click", () => toggleMainItem(item.id, !item.is_main, mainToggleBtn));
+      const mainBtn = document.createElement("button");
+      mainBtn.className = "btn-main-toggle" + (item.is_main ? " active" : "");
+      mainBtn.textContent = item.is_main ? "메인재료 ✓" : "메인재료로 표시";
+      mainBtn.addEventListener("click", () => toggleMainItem(item.id, !item.is_main, mainBtn));
 
-      const deleteBtn = document.createElement("button");
-      deleteBtn.className = "item-delete";
-      deleteBtn.textContent = "삭제";
-      deleteBtn.addEventListener("click", () => deleteFridgeItem(item.id, deleteBtn));
+      const removeBtn = document.createElement("button");
+      removeBtn.className = "btn-remove";
+      removeBtn.textContent = "삭제";
+      removeBtn.addEventListener("click", () => deleteFridgeItem(item.id, removeBtn));
 
-      actions.appendChild(mainToggleBtn);
-      actions.appendChild(deleteBtn);
+      actions.appendChild(mainBtn);
+      actions.appendChild(removeBtn);
 
       li.appendChild(info);
       li.appendChild(actions);
@@ -435,6 +647,14 @@
 
     fridgeListContainer.innerHTML = "";
     fridgeListContainer.appendChild(list);
+    updateRecommendButton();
+  }
+
+  function updateRecommendButton() {
+    const mainCount = fridgeItems.filter((i) => i.is_main).length;
+    recommendBtn.textContent = mainCount > 0
+      ? `메인재료 ${mainCount}개로 레시피 추천받기 →`
+      : "냉장고 재료로 레시피 추천받기 →";
   }
 
   async function deleteFridgeItem(itemId, buttonEl) {
@@ -483,21 +703,29 @@
 
   const itemNameInput = document.getElementById("item-name-input");
   const itemAmountInput = document.getElementById("item-amount-input");
+  const itemExpiryInput = document.getElementById("item-expiry-input");
   const itemAddBtn = document.getElementById("item-add-btn");
   const itemAddError = document.getElementById("item-add-error");
 
   async function addFridgeItem() {
     const name = itemNameInput.value;
     const amount = itemAmountInput.value;
+    const category = categorySelect.value;
+    const expiryRaw = itemExpiryInput.value;
 
     hideError(itemAddError);
     itemAddBtn.disabled = true;
+
+    const body = { name, amount, category };
+    if (expiryRaw !== "") {
+      body.expiry_days = parseInt(expiryRaw, 10);
+    }
 
     try {
       const res = await fetch(`${BACKEND_URL}/api/fridge/items`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, amount }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
@@ -508,6 +736,8 @@
 
       itemNameInput.value = "";
       itemAmountInput.value = "";
+      itemExpiryInput.value = "";
+      categorySelect.value = "채소";
       await loadFridgeItems();
     } catch (err) {
       showError(itemAddError, "서버에 연결할 수 없습니다. 네트워크 상태를 확인해주세요.");
@@ -517,7 +747,7 @@
   }
 
   itemAddBtn.addEventListener("click", addFridgeItem);
-  [itemNameInput, itemAmountInput].forEach((input) => {
+  [itemNameInput, itemAmountInput, itemExpiryInput].forEach((input) => {
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") addFridgeItem();
     });
@@ -527,25 +757,22 @@
   // 레시피 추천
   // -------------------------------------------------------------------------
 
-  const servingsInput = document.getElementById("servings-input");
-  const recommendBtn = document.getElementById("recommend-btn");
-  const recommendError = document.getElementById("recommend-error");
-  const recipeResult = document.getElementById("recipe-result");
+  const recipesContainer = document.getElementById("recipes-container");
+  const recipesSubtitle = document.getElementById("recipes-subtitle");
 
   async function requestRecommendation() {
-    const servings = parseInt(servingsInput.value, 10);
-
-    hideError(recommendError);
-    recipeResult.innerHTML = "";
-
-    if (!Number.isInteger(servings) || servings <= 0) {
-      showError(recommendError, "1인분 이상으로 설정해주세요");
-      return;
-    }
-
     // 중복 요청 방지: 로딩 중엔 버튼 비활성화
     recommendBtn.disabled = true;
-    recommendBtn.textContent = "추천 중...";
+
+    // 요청 시점의 메인재료 태그 순서를 그대로 기억해둔다 (added_at 오름차순 —
+    // 백엔드가 같은 순서로 순회하므로, 응답 recipes 배열과 인덱스로 짝지을 수 있다).
+    const focusItems = fridgeItems.filter((i) => i.is_main).slice(0, MAX_MAIN_ITEMS);
+
+    recipesSubtitle.textContent = focusItems.length > 0
+      ? "선택한 메인재료마다 레시피를 하나씩 추천해드려요."
+      : "냉장고에 있는 재료 전부와 최근 후기 3개를 반영합니다.";
+    recipesContainer.innerHTML = '<div class="loading-state">추천받는 중...</div>';
+    showRecipesScreen();
 
     try {
       const res = await fetch(`${BACKEND_URL}/api/recommend`, {
@@ -556,41 +783,47 @@
 
       if (!res.ok) {
         const message = await extractErrorMessage(res);
-        showError(recommendError, message);
+        recipesContainer.innerHTML = `<div class="error-text">${escapeHtml(message)}</div>`;
         return;
       }
 
       const data = await res.json();
-      renderRecipes(data.recipes);
+      renderRecipes(data.recipes, focusItems);
     } catch (err) {
-      showError(recommendError, "서버에 연결할 수 없습니다. 네트워크 상태를 확인해주세요.");
+      recipesContainer.innerHTML =
+        '<div class="error-text">서버에 연결할 수 없습니다. 네트워크 상태를 확인해주세요.</div>';
     } finally {
       recommendBtn.disabled = false;
-      recommendBtn.textContent = "추천받기";
     }
   }
 
-  function renderRecipes(recipes) {
-    // recipes는 메인재료 태그 개수(0~2개)에 따라 1개 또는 2개가 온다.
-    recipeResult.innerHTML = "";
-    recipes.forEach((recipe) => {
-      recipeResult.appendChild(buildRecipeCard(recipe));
+  recommendBtn.addEventListener("click", requestRecommendation);
+
+  function renderRecipes(recipes, focusItems) {
+    recipesContainer.innerHTML = "";
+    recipes.forEach((recipe, i) => {
+      const focusName = focusItems[i] ? focusItems[i].name : null;
+      recipesContainer.appendChild(buildRecipeCard(recipe, focusName));
     });
   }
 
-  function buildRecipeCard(recipe) {
-    // feasible=false 여도 steps/note는 그대로 보여준다.
+  function buildRecipeCard(recipe, focusName) {
     const card = document.createElement("div");
     card.className = "recipe-card";
 
-    const feasibleBadge = recipe.feasible
-      ? '<span class="badge feasible">재료 충분</span>'
-      : '<span class="badge not-feasible">재료 부족</span>';
+    const feasibleChip = recipe.feasible
+      ? `<span class="pill">재료 충분</span>`
+      : `<span class="pill expiry-soon">재료 부족</span>`;
 
     card.innerHTML = `
-      <h3 class="recipe-title">${escapeHtml(recipe.recipe_name)}${feasibleBadge}</h3>
-      <p class="recipe-meta">${escapeHtml(String(recipe.servings))}인분</p>
-      <div class="recipe-note">${escapeHtml(recipe.note)}</div>
+      ${focusName ? `<span class="recipe-focus-badge">${escapeHtml(focusName)} 메인재료</span>` : ""}
+      <h3 class="recipe-title">${escapeHtml(recipe.recipe_name)}</h3>
+      <p class="recipe-desc">${escapeHtml(recipe.note)}</p>
+      <div class="recipe-chips">
+        <span class="pill">${escapeHtml(String(recipe.servings))}인분</span>
+        ${feasibleChip}
+      </div>
+      <p class="recipe-steps-label">조리 순서</p>
       <div class="recipe-steps">${escapeHtml(recipe.steps)}</div>
     `;
 
@@ -609,6 +842,7 @@
     const commentInput = document.createElement("input");
     commentInput.type = "text";
     commentInput.placeholder = "한줄 후기 (선택)";
+    commentInput.style.width = "100%";
 
     const buttonsRow = document.createElement("div");
     buttonsRow.className = "feedback-buttons";
@@ -669,12 +903,12 @@
     }
   }
 
-  recommendBtn.addEventListener("click", requestRecommendation);
-
   // -------------------------------------------------------------------------
   // 초기 로드
   // -------------------------------------------------------------------------
 
+  renderServings();
+  showFridgeScreen();
   loadFridgeItems();
 </script>
 </body>

@@ -11,6 +11,7 @@ SPEC.md 5번(API 명세) / 3번(CORS) / 13번(백엔드 확인 흐름)을 그대
 프로덕션: uvicorn app:app --host 0.0.0.0 --port $PORT   (워커 1개, --workers 금지)
 """
 
+from datetime import date, timedelta
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -35,6 +36,7 @@ app.add_middleware(
 
 _VALID_RATINGS = ("좋았음", "별로였음")
 MAX_MAIN_ITEMS = 2
+CATEGORIES = ("채소", "육류", "수산", "유제품", "조미료", "가공식품", "기타")
 
 
 @app.on_event("startup")
@@ -58,6 +60,9 @@ async def _unhandled_exception_handler(request, exc):
 class ItemCreate(BaseModel):
     name: str
     amount: str
+    # category 는 Literal 대신 str + 수동 검증 (rating과 같은 이유 - SPEC.md 5-5 참고).
+    category: str = "기타"
+    expiry_days: Optional[int] = None
 
 
 class RecommendRequest(BaseModel):
@@ -93,7 +98,16 @@ def create_item(payload: ItemCreate):
     amount = payload.amount.strip()
     if not name or not amount:
         raise HTTPException(status_code=400, detail="재료 이름과 양을 모두 입력해주세요")
-    return db.add_item(name, amount)
+
+    category = payload.category if payload.category in CATEGORIES else "기타"
+
+    expiry_date = None
+    if payload.expiry_days is not None:
+        if payload.expiry_days < 0:
+            raise HTTPException(status_code=400, detail="유통기한은 0 이상의 정수여야 합니다")
+        expiry_date = (date.today() + timedelta(days=payload.expiry_days)).isoformat()
+
+    return db.add_item(name, amount, category, expiry_date)
 
 
 # ---------------------------------------------------------------------------

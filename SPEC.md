@@ -77,6 +77,8 @@ app.add_middleware(
 - `amount`: TEXT NOT NULL (예: "1개", "반개", "200g") — 자유 텍스트, 숫자로 변환하려 하지 말 것
 - `added_at`: TEXT DEFAULT (datetime('now'))
 - `is_main`: INTEGER (0 또는 1, 기본값 0 — API 응답 시 반드시 Python bool로 변환. 사용자가 "메인재료"로 태그한 재료. 최대 2개까지만 허용 — 자세한 내용은 5-3-1, 5-4 참고)
+- `category`: TEXT NOT NULL, 기본값 `"기타"` (허용값: 채소/육류/수산/유제품/조미료/가공식품/기타. 등록 시 이 중 하나가 아니면 서버가 조용히 "기타"로 대체한다 — 422로 거부하지 않음)
+- `expiry_date`: TEXT (nullable, `"YYYY-MM-DD"` 형식). 등록 요청의 `expiry_days`(오늘부터 며칠 후인지)를 서버가 `date.today() + timedelta(days=expiry_days)`로 변환해 저장한 절대 날짜. 프론트는 이 값과 오늘 날짜를 비교해 D-day를 매번 새로 계산한다 (저장 시점의 상대값을 그대로 쓰지 않음 — 시간이 지나도 정확하도록).
 
 ### recipes
 - `id`: INTEGER PRIMARY KEY AUTOINCREMENT
@@ -120,15 +122,18 @@ const message = typeof errData.detail === "string"
 
 - `POST /api/fridge/items`
 - 요청: `{"name": "양파", "amount": "1개"}`
-- 응답 200: `{"id": 1, "name": "양파", "amount": "1개", "added_at": "2026-09-08T12:00:00", "is_main": false}`
+- 요청에 `category`(선택, 기본값 "기타")와 `expiry_days`(선택, 0 이상의 정수 — 오늘로부터 며칠 후 유통기한인지)도 함께 보낼 수 있다: `{"name": "양파", "amount": "1개", "category": "채소", "expiry_days": 10}`
+- 응답 200: `{"id": 1, "name": "양파", "amount": "1개", "added_at": "2026-09-08T12:00:00", "is_main": false, "category": "채소", "expiry_date": "2026-09-19"}`
 - **검증**: name 또는 amount가 빈 문자열이거나 공백만 있으면 400 `{"detail": "재료 이름과 양을 모두 입력해주세요"}`
 - **참고**: 이건 필드가 "존재하지만 빈 값"인 경우다. `name`/`amount` 키 자체가 요청 body에 없으면 FastAPI가 자동으로 422(배열 detail)를 낸다 — 둘 다 실제로 발생할 수 있으니 프론트는 두 경우 모두 대비해야 한다 (이미 위 에러 규칙대로 처리하면 자동으로 커버됨).
+- `category`가 허용 목록에 없으면 422로 거부하지 않고 서버가 "기타"로 대체한다 (Literal 미사용 원칙과 같은 이유로, 프론트가 select 태그만 쓰면 애초에 잘못된 값이 안 옴)
+- `expiry_days`가 음수면 400 `{"detail": "유통기한은 0 이상의 정수여야 합니다"}`. 생략하면 `expiry_date`는 `null`
 - `is_main`은 등록 시점엔 항상 `false`. 등록 후 3-1번 엔드포인트로 태그한다.
 
 ### 2) 냉장고 현황 조회
 
 - `GET /api/fridge/items`
-- 응답 200: `[{"id": 1, "name": "양파", "amount": "1개", "added_at": "...", "is_main": false}, ...]`
+- 응답 200: `[{"id": 1, "name": "양파", "amount": "1개", "added_at": "...", "is_main": false, "category": "채소", "expiry_date": "2026-09-19"}, ...]`
 - **정렬**: `added_at` 오름차순(등록된 순서대로). `ORDER BY` 없이 조회하면 SQLite가 순서를 보장하지 않으니 반드시 `ORDER BY added_at ASC`를 쓸 것.
 - **엣지케이스**: 재료가 하나도 없으면 에러가 아니라 빈 배열 `[]` 반환. 프론트는 이때 "냉장고가 비어있어요" 문구 표시.
 
