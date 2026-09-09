@@ -34,6 +34,7 @@ app.add_middleware(
 )
 
 _VALID_RATINGS = ("좋았음", "별로였음")
+MAX_MAIN_ITEMS = 2
 
 
 @app.on_event("startup")
@@ -61,6 +62,10 @@ class ItemCreate(BaseModel):
 
 class RecommendRequest(BaseModel):
     servings: int
+
+
+class MainUpdate(BaseModel):
+    is_main: bool
 
 
 class FeedbackCreate(BaseModel):
@@ -113,6 +118,25 @@ def remove_item(item_id: int):
 
 
 # ---------------------------------------------------------------------------
+# 3-1) 메인재료 태그 (최대 2개 - 태그된 재료마다 레시피를 하나씩 추천한다)
+# ---------------------------------------------------------------------------
+
+@app.patch("/api/fridge/items/{item_id}/main")
+def update_item_main(item_id: int, payload: MainUpdate):
+    item = db.get_item(item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="재료를 찾을 수 없습니다")
+
+    if payload.is_main and not item["is_main"] and db.count_main_items() >= MAX_MAIN_ITEMS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"메인재료는 최대 {MAX_MAIN_ITEMS}개까지 선택할 수 있어요",
+        )
+
+    return db.set_item_main(item_id, payload.is_main)
+
+
+# ---------------------------------------------------------------------------
 # 4) 레시피 추천
 # ---------------------------------------------------------------------------
 
@@ -128,30 +152,41 @@ def recommend(payload: RecommendRequest):
 
     feedback = db.recent_feedback(3)
 
-    try:
-        result = llm.recommend_recipe(items, feedback, payload.servings)
-    except llm.AIRequestError as exc:
-        raise HTTPException(status_code=502, detail=f"AI 추천 실패 (status={exc.status})")
-    except llm.AIResponseFormatError:
-        raise HTTPException(status_code=502, detail="AI 응답 형식이 예상과 다릅니다")
+    # 메인재료로 태그된 재료(최대 MAX_MAIN_ITEMS개)마다 레시피를 하나씩 추천한다.
+    # 태그된 재료가 없으면 예전처럼 특정 재료에 얽매이지 않는 레시피 1개를 추천한다.
+    main_items = [it for it in items if it["is_main"]][:MAX_MAIN_ITEMS]
+    foci = [it["name"] for it in main_items] if main_items else [None]
 
-    # 파싱까지 끝난 뒤에만 저장한다 (부분적으로 깨진 레코드가 남지 않게).
-    recipe_id = db.add_recipe(
-        result["recipe_name"],
-        result["servings"],
-        result["feasible"],
-        result["note"],
-        result["steps"],
-    )
+    # 모든 Gemini 호출이 성공한 뒤에만 DB에 저장한다 (일부만 저장되는 것 방지).
+    results = []
+    for focus in foci:
+        try:
+            result = llm.recommend_recipe(items, feedback, payload.servings, focus_ingredient=focus)
+        except llm.AIRequestError as exc:
+            raise HTTPException(status_code=502, detail=f"AI 추천 실패 (status={exc.status})")
+        except llm.AIResponseFormatError:
+            raise HTTPException(status_code=502, detail="AI 응답 형식이 예상과 다릅니다")
+        results.append(result)
 
-    return {
-        "recipe_id": recipe_id,
-        "recipe_name": result["recipe_name"],
-        "servings": result["servings"],
-        "feasible": result["feasible"],
-        "note": result["note"],
-        "steps": result["steps"],
-    }
+    recipes = []
+    for result in results:
+        recipe_id = db.add_recipe(
+            result["recipe_name"],
+            result["servings"],
+            result["feasible"],
+            result["note"],
+            result["steps"],
+        )
+        recipes.append({
+            "recipe_id": recipe_id,
+            "recipe_name": result["recipe_name"],
+            "servings": result["servings"],
+            "feasible": result["feasible"],
+            "note": result["note"],
+            "steps": result["steps"],
+        })
+
+    return {"recipes": recipes}
 
 
 # ---------------------------------------------------------------------------

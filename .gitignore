@@ -12,3 +12,6 @@ __pycache__/
 # phase execution outputs
 phases/**/phase*-output.json
 phases/**/step*-output.json
+
+# 로컬 프론트 테스트용 (커밋 안 함)
+_local_frontend_test/

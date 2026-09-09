@@ -56,6 +56,14 @@ def init_db():
             """
         )
         conn.commit()
+
+        # 기존 fridge.db 에는 is_main 컬럼이 없을 수 있으므로 마이그레이션.
+        existing_cols = {row["name"] for row in conn.execute("PRAGMA table_info(fridge_items)")}
+        if "is_main" not in existing_cols:
+            conn.execute(
+                "ALTER TABLE fridge_items ADD COLUMN is_main INTEGER NOT NULL DEFAULT 0"
+            )
+            conn.commit()
     finally:
         conn.close()
 
@@ -78,6 +86,7 @@ def add_item(name: str, amount: str) -> dict:
             "name": name,
             "amount": amount,
             "added_at": added_at,
+            "is_main": False,
         }
     finally:
         conn.close()
@@ -87,9 +96,28 @@ def list_items() -> list:
     conn = _connect()
     try:
         rows = conn.execute(
-            "SELECT id, name, amount, added_at FROM fridge_items ORDER BY added_at ASC"
+            "SELECT id, name, amount, added_at, is_main FROM fridge_items ORDER BY added_at ASC"
         ).fetchall()
-        return [dict(r) for r in rows]
+        items = [dict(r) for r in rows]
+        for item in items:
+            item["is_main"] = bool(item["is_main"])
+        return items
+    finally:
+        conn.close()
+
+
+def get_item(item_id: int):
+    conn = _connect()
+    try:
+        row = conn.execute(
+            "SELECT id, name, amount, added_at, is_main FROM fridge_items WHERE id = ?",
+            (item_id,),
+        ).fetchone()
+        if row is None:
+            return None
+        item = dict(row)
+        item["is_main"] = bool(item["is_main"])
+        return item
     finally:
         conn.close()
 
@@ -100,6 +128,38 @@ def delete_item(item_id: int) -> bool:
         cur = conn.execute("DELETE FROM fridge_items WHERE id = ?", (item_id,))
         conn.commit()
         return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def count_main_items() -> int:
+    conn = _connect()
+    try:
+        row = conn.execute(
+            "SELECT COUNT(*) AS c FROM fridge_items WHERE is_main = 1"
+        ).fetchone()
+        return row["c"]
+    finally:
+        conn.close()
+
+
+def set_item_main(item_id: int, is_main: bool):
+    conn = _connect()
+    try:
+        cur = conn.execute(
+            "UPDATE fridge_items SET is_main = ? WHERE id = ?",
+            (1 if is_main else 0, item_id),
+        )
+        conn.commit()
+        if cur.rowcount == 0:
+            return None
+        row = conn.execute(
+            "SELECT id, name, amount, added_at, is_main FROM fridge_items WHERE id = ?",
+            (item_id,),
+        ).fetchone()
+        item = dict(row)
+        item["is_main"] = bool(item["is_main"])
+        return item
     finally:
         conn.close()
 
