@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>냉장고털기</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --card: #141414;
+    --border: #262626;
+    --text: #ffffff;
+    --text-body: #d4d4d4;
+    --text-muted: #a3a3a3;
+    --text-disabled: #525252;
+    --positive: #22c55e;
+    --negative: #ef4444;
+    --neutral: #525252;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.5;
+  }
+
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 600;
+    margin: 0 0 8px;
+  }
+
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin: 0 0 32px;
+  }
+
+  section {
+    margin-bottom: 32px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  h2 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin: 0 0 16px;
+  }
+
+  .row {
+    display: flex;
+    gap: 8px;
+  }
+
+  input[type="text"],
+  input[type="number"] {
+    flex: 1;
+    background: #0d0d0d;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 14px;
+    min-width: 0;
+  }
+
+  input::placeholder {
+    color: var(--text-disabled);
+  }
+
+  input:focus {
+    outline: none;
+    border-color: #525252;
+  }
+
+  button {
+    background: #ffffff;
+    color: #000000;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  button:hover:not(:disabled) {
+    background: #d4d4d4;
+  }
+
+  button:disabled {
+    background: #262626;
+    color: var(--text-disabled);
+    cursor: not-allowed;
+  }
+
+  button.secondary {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+
+  button.secondary:hover:not(:disabled) {
+    color: var(--text);
+    border-color: #525252;
+  }
+
+  .error-text {
+    color: var(--negative);
+    font-size: 13px;
+    margin-top: 8px;
+  }
+
+  .item-list {
+    list-style: none;
+    margin: 16px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .item-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #0d0d0d;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+
+  .item-info {
+    font-size: 14px;
+  }
+
+  .item-name {
+    color: var(--text);
+  }
+
+  .item-amount {
+    color: var(--text-muted);
+    margin-left: 6px;
+  }
+
+  .item-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .item-main-toggle {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .item-main-toggle:hover:not(:disabled) {
+    color: var(--text);
+    border-color: #525252;
+  }
+
+  .item-main-toggle.active {
+    background: #ffffff;
+    color: #000000;
+    border-color: #ffffff;
+  }
+
+  .item-main-toggle.active:hover:not(:disabled) {
+    background: #d4d4d4;
+  }
+
+  .item-delete {
+    background: transparent;
+    color: var(--text-disabled);
+    border: none;
+    padding: 4px 8px;
+    font-size: 13px;
+  }
+
+  .item-delete:hover:not(:disabled) {
+    color: var(--negative);
+    background: transparent;
+  }
+
+  .hint-text {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin: -8px 0 16px;
+  }
+
+  .empty-state,
+  .loading-state {
+    color: var(--text-muted);
+    font-size: 14px;
+    padding: 16px 0;
+    text-align: center;
+  }
+
+  .recipe-card {
+    margin-top: 16px;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+  }
+
+  .recipe-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+
+  .recipe-meta {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin: 0 0 12px;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 6px;
+    padding: 2px 8px;
+    margin-left: 8px;
+  }
+
+  .badge.feasible {
+    color: var(--positive);
+    background: rgba(34, 197, 94, 0.12);
+  }
+
+  .badge.not-feasible {
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.12);
+  }
+
+  .recipe-note {
+    color: var(--text-body);
+    font-size: 14px;
+    background: #0d0d0d;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+  }
+
+  .recipe-steps {
+    color: var(--text-body);
+    font-size: 14px;
+    white-space: pre-line;
+  }
+
+  .feedback-row {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .feedback-buttons {
+    display: flex;
+    gap: 8px;
+  }
+
+  .feedback-buttons button {
+    flex: 1;
+  }
+
+  .feedback-done {
+    color: var(--positive);
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>냉장고털기</h1>
+  <p class="subtitle">우리 팀 공용 냉장고 — 재료를 등록하고 레시피를 추천받으세요.</p>
+
+  <!-- 재료 추가 -->
+  <section>
+    <div class="card">
+      <h2>재료 추가</h2>
+      <div class="row">
+        <input type="text" id="item-name-input" placeholder="재료 이름 (예: 양파)">
+        <input type="text" id="item-amount-input" placeholder="양 (예: 1개)">
+        <button id="item-add-btn">추가</button>
+      </div>
+      <div class="error-text" id="item-add-error" hidden></div>
+    </div>
+  </section>
+
+  <!-- 냉장고 현황 -->
+  <section>
+    <div class="card">
+      <h2>냉장고 현황</h2>
+      <p class="hint-text">'메인재료'로 최대 2개까지 표시하면, 표시한 재료마다 레시피를 하나씩 추천해줘요.</p>
+      <div id="fridge-list-container">
+        <div class="loading-state">불러오는 중...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 레시피 추천 -->
+  <section>
+    <div class="card">
+      <h2>레시피 추천</h2>
+      <div class="row">
+        <input type="number" id="servings-input" placeholder="인분 수" min="1" value="2">
+        <button id="recommend-btn">추천받기</button>
+      </div>
+      <div class="error-text" id="recommend-error" hidden></div>
+      <div id="recipe-result"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+  // 배포 직전에 실제 Railway 백엔드 주소로 반드시 변경할 것
+  const BACKEND_URL = "http://localhost:8000";
+
+  // -------------------------------------------------------------------------
+  // 공통 유틸
+  // -------------------------------------------------------------------------
+
+  // SPEC.md 5번: 자체 에러는 detail이 문자열, FastAPI 자동 422는 detail이 배열.
+  // 둘 다 처리해야 [object Object] 같은 게 화면에 뜨지 않는다.
+  async function extractErrorMessage(res) {
+    const errData = await res.json().catch(() => ({}));
+    return typeof errData.detail === "string"
+      ? errData.detail
+      : "요청 형식이 올바르지 않습니다";
+  }
+
+  function showError(el, message) {
+    el.textContent = message;
+    el.hidden = false;
+  }
+
+  function hideError(el) {
+    el.hidden = true;
+    el.textContent = "";
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // -------------------------------------------------------------------------
+  // 냉장고 목록
+  // -------------------------------------------------------------------------
+
+  const fridgeListContainer = document.getElementById("fridge-list-container");
+
+  async function loadFridgeItems() {
+    fridgeListContainer.innerHTML = '<div class="loading-state">불러오는 중...</div>';
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/fridge/items`);
+      if (!res.ok) {
+        const message = await extractErrorMessage(res);
+        fridgeListContainer.innerHTML = `<div class="error-text">${escapeHtml(message)}</div>`;
+        return;
+      }
+      const items = await res.json();
+      renderFridgeItems(items);
+    } catch (err) {
+      fridgeListContainer.innerHTML =
+        '<div class="error-text">서버에 연결할 수 없습니다. 네트워크 상태를 확인해주세요.</div>';
+    }
+  }
+
+  function renderFridgeItems(items) {
+    if (!items || items.length === 0) {
+      fridgeListContainer.innerHTML = '<div class="empty-state">냉장고가 비어있어요</div>';
+      return;
+    }
+
+    const list = document.createElement("ul");
+    list.className = "item-list";
+
+    items.forEach((item) => {
+      const li = document.createElement("li");
+      li.className = "item-row";
+
+      const info = document.createElement("span");
+      info.className = "item-info";
+      info.innerHTML = `<span class="item-name">${escapeHtml(item.name)}</span><span class="item-amount">${escapeHtml(item.amount)}</span>`;
+
+      const actions = document.createElement("span");
+      actions.className = "item-actions";
+
+      const mainToggleBtn = document.createElement("button");
+      mainToggleBtn.className = "item-main-toggle" + (item.is_main ? " active" : "");
+      mainToggleBtn.textContent = item.is_main ? "메인재료 ✓" : "메인재료로 표시";
+      mainToggleBtn.addEventListener("click", () => toggleMainItem(item.id, !item.is_main, mainToggleBtn));
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "item-delete";
+      deleteBtn.textContent = "삭제";
+      deleteBtn.addEventListener("click", () => deleteFridgeItem(item.id, deleteBtn));
+
+      actions.appendChild(mainToggleBtn);
+      actions.appendChild(deleteBtn);
+
+      li.appendChild(info);
+      li.appendChild(actions);
+      list.appendChild(li);
+    });
+
+    fridgeListContainer.innerHTML = "";
+    fridgeListContainer.appendChild(list);
+  }
+
+  async function deleteFridgeItem(itemId, buttonEl) {
+    buttonEl.disabled = true;
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/fridge/items/${itemId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const message = await extractErrorMessage(res);
+        alert(message);
+        buttonEl.disabled = false;
+        return;
+      }
+      await loadFridgeItems();
+    } catch (err) {
+      alert("서버에 연결할 수 없습니다. 네트워크 상태를 확인해주세요.");
+      buttonEl.disabled = false;
+    }
+  }
+
+  async function toggleMainItem(itemId, nextIsMain, buttonEl) {
+    buttonEl.disabled = true;
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/fridge/items/${itemId}/main`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_main: nextIsMain }),
+      });
+      if (!res.ok) {
+        const message = await extractErrorMessage(res);
+        alert(message);
+        buttonEl.disabled = false;
+        return;
+      }
+      await loadFridgeItems();
+    } catch (err) {
+      alert("서버에 연결할 수 없습니다. 네트워크 상태를 확인해주세요.");
+      buttonEl.disabled = false;
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // 재료 추가
+  // -------------------------------------------------------------------------
+
+  const itemNameInput = document.getElementById("item-name-input");
+  const itemAmountInput = document.getElementById("item-amount-input");
+  const itemAddBtn = document.getElementById("item-add-btn");
+  const itemAddError = document.getElementById("item-add-error");
+
+  async function addFridgeItem() {
+    const name = itemNameInput.value;
+    const amount = itemAmountInput.value;
+
+    hideError(itemAddError);
+    itemAddBtn.disabled = true;
+
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/fridge/items`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, amount }),
+      });
+
+      if (!res.ok) {
+        const message = await extractErrorMessage(res);
+        showError(itemAddError, message);
+        return;
+      }
+
+      itemNameInput.value = "";
+      itemAmountInput.value = "";
+      await loadFridgeItems();
+    } catch (err) {
+      showError(itemAddError, "서버에 연결할 수 없습니다. 네트워크 상태를 확인해주세요.");
+    } finally {
+      itemAddBtn.disabled = false;
+    }
+  }
+
+  itemAddBtn.addEventListener("click", addFridgeItem);
+  [itemNameInput, itemAmountInput].forEach((input) => {
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") addFridgeItem();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // 레시피 추천
+  // -------------------------------------------------------------------------
+
+  const servingsInput = document.getElementById("servings-input");
+  const recommendBtn = document.getElementById("recommend-btn");
+  const recommendError = document.getElementById("recommend-error");
+  const recipeResult = document.getElementById("recipe-result");
+
+  async function requestRecommendation() {
+    const servings = parseInt(servingsInput.value, 10);
+
+    hideError(recommendError);
+    recipeResult.innerHTML = "";
+
+    if (!Number.isInteger(servings) || servings <= 0) {
+      showError(recommendError, "1인분 이상으로 설정해주세요");
+      return;
+    }
+
+    // 중복 요청 방지: 로딩 중엔 버튼 비활성화
+    recommendBtn.disabled = true;
+    recommendBtn.textContent = "추천 중...";
+
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/recommend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ servings }),
+      });
+
+      if (!res.ok) {
+        const message = await extractErrorMessage(res);
+        showError(recommendError, message);
+        return;
+      }
+
+      const data = await res.json();
+      renderRecipes(data.recipes);
+    } catch (err) {
+      showError(recommendError, "서버에 연결할 수 없습니다. 네트워크 상태를 확인해주세요.");
+    } finally {
+      recommendBtn.disabled = false;
+      recommendBtn.textContent = "추천받기";
+    }
+  }
+
+  function renderRecipes(recipes) {
+    // recipes는 메인재료 태그 개수(0~2개)에 따라 1개 또는 2개가 온다.
+    recipeResult.innerHTML = "";
+    recipes.forEach((recipe) => {
+      recipeResult.appendChild(buildRecipeCard(recipe));
+    });
+  }
+
+  function buildRecipeCard(recipe) {
+    // feasible=false 여도 steps/note는 그대로 보여준다.
+    const card = document.createElement("div");
+    card.className = "recipe-card";
+
+    const feasibleBadge = recipe.feasible
+      ? '<span class="badge feasible">재료 충분</span>'
+      : '<span class="badge not-feasible">재료 부족</span>';
+
+    card.innerHTML = `
+      <h3 class="recipe-title">${escapeHtml(recipe.recipe_name)}${feasibleBadge}</h3>
+      <p class="recipe-meta">${escapeHtml(String(recipe.servings))}인분</p>
+      <div class="recipe-note">${escapeHtml(recipe.note)}</div>
+      <div class="recipe-steps">${escapeHtml(recipe.steps)}</div>
+    `;
+
+    const feedbackRow = document.createElement("div");
+    feedbackRow.className = "feedback-row";
+    card.appendChild(feedbackRow);
+
+    buildFeedbackForm(recipe.recipe_id, feedbackRow);
+
+    return card;
+  }
+
+  function buildFeedbackForm(recipeId, feedbackRow) {
+    feedbackRow.innerHTML = "";
+
+    const commentInput = document.createElement("input");
+    commentInput.type = "text";
+    commentInput.placeholder = "한줄 후기 (선택)";
+
+    const buttonsRow = document.createElement("div");
+    buttonsRow.className = "feedback-buttons";
+
+    const goodBtn = document.createElement("button");
+    goodBtn.className = "secondary";
+    goodBtn.textContent = "좋았음";
+
+    const badBtn = document.createElement("button");
+    badBtn.className = "secondary";
+    badBtn.textContent = "별로였음";
+
+    buttonsRow.appendChild(goodBtn);
+    buttonsRow.appendChild(badBtn);
+
+    const errorEl = document.createElement("div");
+    errorEl.className = "error-text";
+    errorEl.hidden = true;
+
+    feedbackRow.appendChild(commentInput);
+    feedbackRow.appendChild(buttonsRow);
+    feedbackRow.appendChild(errorEl);
+
+    const submit = (rating) =>
+      submitFeedback(recipeId, rating, commentInput.value, [goodBtn, badBtn], errorEl, feedbackRow);
+
+    goodBtn.addEventListener("click", () => submit("좋았음"));
+    badBtn.addEventListener("click", () => submit("별로였음"));
+  }
+
+  async function submitFeedback(recipeId, rating, comment, buttons, errorEl, containerEl) {
+    hideError(errorEl);
+    buttons.forEach((b) => (b.disabled = true));
+
+    const body = { rating };
+    if (comment && comment.trim()) {
+      body.comment = comment.trim();
+    }
+
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/recipes/${recipeId}/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const message = await extractErrorMessage(res);
+        showError(errorEl, message);
+        buttons.forEach((b) => (b.disabled = false));
+        return;
+      }
+
+      containerEl.innerHTML = '<div class="feedback-done">후기가 등록되었습니다. 감사합니다!</div>';
+    } catch (err) {
+      showError(errorEl, "서버에 연결할 수 없습니다. 네트워크 상태를 확인해주세요.");
+      buttons.forEach((b) => (b.disabled = false));
+    }
+  }
+
+  recommendBtn.addEventListener("click", requestRecommendation);
+
+  // -------------------------------------------------------------------------
+  // 초기 로드
+  // -------------------------------------------------------------------------
+
+  loadFridgeItems();
+</script>
+</body>
+</html>
